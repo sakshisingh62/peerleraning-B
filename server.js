@@ -1,0 +1,91 @@
+/**
+ * Express Server - Peer Learning Session Manager
+ * MERN Stack Backend
+ */
+
+const express = require('express');
+const cors = require('cors');
+const dotenv = require('dotenv');
+const mongoose = require('mongoose');
+const passport = require('passport');
+const session = require('express-session');
+
+// Load environment variables
+dotenv.config();
+
+const app = express();
+
+// Middleware
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  credentials: true
+}));
+app.use(express.json());
+
+// Session middleware
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'your-secret-key',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: false } // Set to true in production with HTTPS
+}));
+
+// Passport middleware
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Passport config
+require('./config/passport')(passport);
+
+// ==================== Database Connection ====================
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/navpeerlearning', {
+      useNewUrlParser: true,
+      useUnifiedTopology: true
+    });
+    console.log('✅ MongoDB Connected Successfully');
+  } catch (error) {
+    console.error('❌ MongoDB Connection Error:', error.message);
+    console.log('Make sure MongoDB is running: sudo systemctl start mongod');
+    process.exit(1);
+  }
+};
+
+connectDB();
+
+// ==================== Import Routes ====================
+const userRoutes = require('./routes/users');
+const sessionRoutes = require('./routes/sessions');
+const feedbackRoutes = require('./routes/feedback');
+const authRoutes = require('./routes/auth');
+const certificateRoutes = require('./routes/certificates');
+const badgeRoutes = require('./routes/badges');
+
+// ==================== Routes ====================
+
+// Health Check
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'Server is running', 
+    timestamp: new Date(),
+    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+  });
+});
+
+// API Routes
+app.use('/api/users', userRoutes);
+app.use('/api/sessions', sessionRoutes);
+app.use('/api/feedback', feedbackRoutes);
+app.use('/api/certificates', certificateRoutes);
+app.use('/api/badges', badgeRoutes);
+app.use('/auth', authRoutes);
+
+// ==================== Start Server ====================
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`🚀 Peer Learning Server running on port ${PORT}`);
+  console.log(`📡 API available at http://localhost:${PORT}/api`);
+  console.log(`🌍 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
+});
