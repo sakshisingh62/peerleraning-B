@@ -73,6 +73,23 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Root route - useful for platforms like Render which expect a response at '/'
+app.get('/', (req, res) => {
+  res.send(`
+    <html>
+      <head><title>Peer Learning Backend</title></head>
+      <body style="font-family: Arial, sans-serif; background:#0f172a; color:#e6edf3; display:flex; align-items:center; justify-content:center; height:100vh;">
+        <div style="max-width:720px; text-align:center;">
+          <h1 style="color:#a78bfa;">Peer Learning Backend</h1>
+          <p>API is available under <a href="/api" style="color:#60a5fa;">/api</a></p>
+          <p>Health check: <a href="/api/health" style="color:#60a5fa;">/api/health</a></p>
+          <p style="margin-top:16px; color:#93c5fd; font-size:0.9rem;">If you see this page on Render, the server is running.</p>
+        </div>
+      </body>
+    </html>
+  `);
+});
+
 // API Routes
 app.use('/api/users', userRoutes);
 app.use('/api/sessions', sessionRoutes);
