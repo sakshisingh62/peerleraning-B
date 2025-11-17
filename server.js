@@ -40,7 +40,9 @@ require('./config/passport')(passport);
 // ==================== Database Connection ====================
 const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/navpeerlearning', {
+    // Support both MONGODB_URI and MONGODB_ATLAS environment variable names
+    const mongoUri = process.env.MONGODB_URI || process.env.MONGODB_ATLAS || 'mongodb://localhost:27017/navpeerlearning';
+    await mongoose.connect(mongoUri, {
       useNewUrlParser: true,
       useUnifiedTopology: true
     });
