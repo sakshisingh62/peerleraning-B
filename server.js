@@ -22,12 +22,18 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Session middleware
+// Session middleware - SECURE configuration to prevent session sharing
 app.use(session({
   secret: process.env.SESSION_SECRET || 'your-secret-key',
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: false } // Set to true in production with HTTPS
+  cookie: { 
+    secure: false, // Set to true in production with HTTPS
+    httpOnly: true, // Prevent XSS attacks
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    sameSite: 'lax' // CSRF protection
+  },
+  name: 'sessionId' // Custom session cookie name
 }));
 
 // Passport middleware
@@ -36,6 +42,14 @@ app.use(passport.session());
 
 // Passport config
 require('./config/passport')(passport);
+
+// Debug middleware - log authenticated user for each request
+app.use((req, res, next) => {
+  if (req.user) {
+    console.log(`[${new Date().toISOString()}] User: ${req.user.name} (${req.user.userId}) - ${req.method} ${req.path}`);
+  }
+  next();
+});
 
 // ==================== Database Connection ====================
 const connectDB = async () => {
