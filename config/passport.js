@@ -42,7 +42,11 @@ module.exports = function(passport) {
 
           if (user) {
             console.log('   ✅ Existing user found:', user.userId);
-            // If user exists, update profile picture from Google (keeps existing userId if email-based account)
+            // Ensure userId is set to Google ID (for users created via local signup)
+            if (!user.userId || user.userId !== profile.id) {
+              user.userId = profile.id;
+            }
+            // If user exists, update profile picture from Google
             if (photo) {
               console.log('   📸 Updating profilePicture to:', photo);
               user.profilePicture = photo;
