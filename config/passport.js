@@ -12,13 +12,30 @@ module.exports = function(passport) {
       async (accessToken, refreshToken, profile, done) => {
         try {
           const email = profile.emails && profile.emails[0] && profile.emails[0].value;
-          const photo = profile.photos && profile.photos[0] && profile.photos[0].value;
+          
+          // Fetch high-quality profile photo from Google userinfo endpoint
+          // profile.photos often returns small thumbnails; userinfo gives the full-size picture
+          let photo = profile.photos && profile.photos[0] && profile.photos[0].value;
+          
+          try {
+            const fetch = require('node-fetch');
+            const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+              headers: { Authorization: `Bearer ${accessToken}` }
+            });
+            const userInfo = await userInfoResponse.json();
+            if (userInfo.picture) {
+              // Use the high-quality photo URL from userinfo (remove size parameter for full resolution)
+              photo = userInfo.picture.replace(/=s\d+-c/, ''); // Remove size limit (e.g., =s96-c)
+            }
+          } catch (fetchErr) {
+            console.warn('   ⚠️  Could not fetch Google userinfo, using profile photo fallback:', fetchErr.message);
+          }
 
           console.log('🔐 Google OAuth Callback:');
           console.log('   - Google ID:', profile.id);
           console.log('   - Name:', profile.displayName);
           console.log('   - Email:', email);
-          console.log('   - Photo URL:', photo);
+          console.log('   - Photo URL (high-quality):', photo);
 
           // Try to find an existing user by Google id or by email
           let user = await User.findOne({ $or: [{ userId: profile.id }, { email }] });
