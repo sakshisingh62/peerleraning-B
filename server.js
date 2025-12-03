@@ -28,10 +28,10 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: { 
-    secure: process.env.NODE_ENV === 'production', // Auto-detect: true in production (HTTPS)
+    secure: false, // Set to true in production with HTTPS
     httpOnly: true, // Prevent XSS attacks
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax' // 'none' required for cross-site cookies in production
+    sameSite: 'lax' // CSRF protection
   },
   name: 'sessionId' // Custom session cookie name
 }));
